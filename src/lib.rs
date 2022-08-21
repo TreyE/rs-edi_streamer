@@ -28,14 +28,14 @@ struct ParserState {
 }
 
 #[derive(Debug)]
-struct ParserIterator<T: Read> {
+pub struct ParserIterator<T: Read> {
   io_source: T,
   parser_state: ParserState,
   parser_config: ParserConfig
 }
 
 #[derive(Debug)]
-enum ParserError {
+pub enum ParserError {
     IOError(Error)
 }
 
@@ -97,28 +97,56 @@ static SEGMENT_STARTERS : [u8; 52] = [
 type ParserOutput = Option<Segment>;
 
 #[derive(Debug)]
-struct Segment {
-  tag: Vec<u8>,
-  fields: Vec<Vec<u8>>,
-  start_offset: u64,
-  end_offset: u64,
-  segment_index: u64,
-  raw: Vec<u8>
+pub struct Segment {
+  pub tag: Vec<u8>,
+  pub fields: Vec<Vec<u8>>,
+  pub start_offset: u64,
+  pub end_offset: u64,
+  pub segment_index: u64,
+  pub raw: Vec<u8>
 }
 
-fn parserNext<T: Read>(pi: &mut ParserIterator<T>) -> Option<Result<Segment, ParserError>> {
+pub fn create_parser<T: Read>(ioish: T, element_delimiter: Vec<u8>, segment_delimiter: Vec<u8>) -> ParserIterator<T> {
+  let pc = ParserConfig {
+    element_delimiter: element_delimiter,
+    segment_delimiter: segment_delimiter
+  };
+  let ps = ParserState {
+    byte_index: 0,
+    start_of_last_segment: 0,
+    segment_index: 0,
+    state: PState::InField,
+    current_string: Vec::new(),
+    current_field: Vec::new(),
+    current_segment: Vec::new()
+  };
+  ParserIterator {
+    io_source: ioish,
+    parser_config: pc,
+    parser_state: ps
+  }
+}
+
+impl<T: Read> Iterator for ParserIterator<T> {
+  type Item = Result<Segment, ParserError>;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    parser_next(self)
+  }
+}
+
+fn parser_next<T: Read>(pi: &mut ParserIterator<T>) -> Option<Result<Segment, ParserError>> {
   match pi.parser_state.state {
     PState::Errored => None,
     _ => {
       let res = step(&pi.parser_config, &mut pi.parser_state, &mut pi.io_source);
       match res {
-        Ok(None) => parserNext(pi),
+        Ok(None) => parser_next(pi),
         Ok(Some(res)) => Some(Ok(res)),
         Err(e) => {
           pi.parser_state.state = PState::Errored;
           Some(Err(e))
-        },
-        _ => None
+        }
       }
     }
   }
@@ -215,8 +243,6 @@ mod test {
     use super::ParserIterator;
     use super::PState;
     use super::step;
-    use super::parserNext;
-    use super::Segment;
     use std::io::Cursor;
 
     fn vectorize_string_for_compare(vec_string : &str) -> Vec<u8> {
@@ -284,7 +310,7 @@ mod test {
         parser_state: start,
         io_source: ioish
       };
-      let result = parserNext(&mut pi);
+      let result = pi.next();
       match result {
         None => panic!("NOTHING"),
         Some(x) => {
