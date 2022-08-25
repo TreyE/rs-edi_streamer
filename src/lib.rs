@@ -1,5 +1,4 @@
 pub use crate::edi_segments::ParserIterator;
-pub use crate::edi_segments::ParserError;
 pub use crate::edi_segments::Segment;
 pub use crate::parser_api::create_edi_streamer;
 

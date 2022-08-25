@@ -2,14 +2,12 @@ use std::io::Error;
 use std::io::Read;
 use crate::edi_constants::SEGMENT_STARTERS;
 
-#[derive(Debug)]
 struct ParserConfig {
     element_delimiter: Vec<u8>,
 //    sub_element_delimiter: Vec<u8>,
     segment_delimiter: Vec<u8>
 }
 
-#[derive(Debug)]
 enum PState {
     InField,
     InSegTerm,
@@ -17,7 +15,6 @@ enum PState {
     Errored
 }
 
-#[derive(Debug)]
 struct ParserState {
     byte_index: u64,
     start_of_last_segment: u64,
@@ -28,21 +25,14 @@ struct ParserState {
     current_segment: Vec<Vec<u8>>
 }
 
-#[derive(Debug)]
 pub struct ParserIterator<'a, T: Read> {
   io_source: &'a mut T,
   parser_state: ParserState,
   parser_config: ParserConfig
 }
 
-#[derive(Debug)]
-pub enum ParserError {
-    IOError(Error)
-}
-
 type ParserOutput = Option<Segment>;
 
-#[derive(Debug)]
 pub struct Segment {
   pub tag: Vec<u8>,
   pub fields: Vec<Vec<u8>>,
@@ -74,14 +64,14 @@ pub fn create_segment_iterator<T: Read>(ioish: &mut T, element_delimiter: Vec<u8
 }
 
 impl<'a, T: Read> Iterator for ParserIterator<'a, T> {
-  type Item = Result<Segment, ParserError>;
+  type Item = Result<Segment, Error>;
 
   fn next(&mut self) -> Option<Self::Item> {
     parser_next(self)
   }
 }
 
-fn parser_next<T: Read>(pi: &mut ParserIterator<T>) -> Option<Result<Segment, ParserError>> {
+fn parser_next<T: Read>(pi: &mut ParserIterator<T>) -> Option<Result<Segment, Error>> {
   match pi.parser_state.state {
     PState::Errored => None,
     _ => {
@@ -113,7 +103,7 @@ fn build_segment(fields: Vec<Vec<u8>>, raw: Vec<u8>, start_index: u64, end_index
   }
 }
 
-fn step<T: Read>(pc: &ParserConfig, ps: &mut ParserState, ioish: &mut T) -> Result<ParserOutput, ParserError> {
+fn step<T: Read>(pc: &ParserConfig, ps: &mut ParserState, ioish: &mut T) -> Result<ParserOutput, Error> {
   let mut buff = [0; 1];
   let current_index = ps.byte_index.clone();
   println!("{:?}\n", current_index);
@@ -128,7 +118,7 @@ fn step<T: Read>(pc: &ParserConfig, ps: &mut ParserState, ioish: &mut T) -> Resu
       return Ok(Some(seg))
     },
     Err(e) => {
-      return Err(ParserError::IOError(e))
+      return Err(e)
     }
   };
 
@@ -222,7 +212,6 @@ mod test {
           match x {
             Some(seg) => assert_eq!(seg.fields, expected_vec),
             None => {
-              println!("{:?}", x);
               panic!("Error")
             }
           }
