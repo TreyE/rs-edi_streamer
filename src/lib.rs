@@ -1,11 +1,9 @@
-pub use crate::edi_segments::create_segment_iterator;
 pub use crate::edi_segments::ParserIterator;
 pub use crate::edi_segments::ParserError;
 pub use crate::edi_segments::Segment;
-pub use crate::edi_delimiters::DelimiterResult;
-pub use crate::edi_delimiters::Delimiters;
-pub use crate::edi_delimiters::detect_delimiters;
+pub use crate::parser_api::create_edi_streamer;
 
 mod edi_segments;
 mod edi_delimiters;
 mod edi_constants;
+mod parser_api;

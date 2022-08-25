@@ -29,8 +29,8 @@ struct ParserState {
 }
 
 #[derive(Debug)]
-pub struct ParserIterator<T: Read> {
-  io_source: T,
+pub struct ParserIterator<'a, T: Read> {
+  io_source: &'a mut T,
   parser_state: ParserState,
   parser_config: ParserConfig
 }
@@ -52,7 +52,7 @@ pub struct Segment {
   pub raw: Vec<u8>
 }
 
-pub fn create_segment_iterator<T: Read>(ioish: T, element_delimiter: Vec<u8>, segment_delimiter: Vec<u8>) -> ParserIterator<T> {
+pub fn create_segment_iterator<T: Read>(ioish: &mut T, element_delimiter: Vec<u8>, segment_delimiter: Vec<u8>) -> ParserIterator<T> {
   let pc = ParserConfig {
     element_delimiter: element_delimiter,
     segment_delimiter: segment_delimiter
@@ -73,7 +73,7 @@ pub fn create_segment_iterator<T: Read>(ioish: T, element_delimiter: Vec<u8>, se
   }
 }
 
-impl<T: Read> Iterator for ParserIterator<T> {
+impl<'a, T: Read> Iterator for ParserIterator<'a, T> {
   type Item = Result<Segment, ParserError>;
 
   fn next(&mut self) -> Option<Self::Item> {
@@ -236,7 +236,7 @@ mod test {
 
     #[test]
     fn first_iteration_test() {
-      let ioish = Cursor::new("ISA*ABCD~GS".as_bytes());
+      let mut ioish = Cursor::new("ISA*ABCD~GS".as_bytes());
       let config = ParserConfig {
         segment_delimiter: "~\n".bytes().collect(),
         // sub_element_delimiter: "^".bytes().collect(),
@@ -254,7 +254,7 @@ mod test {
       let mut pi = ParserIterator {
         parser_config: config,
         parser_state: start,
-        io_source: ioish
+        io_source: &mut ioish
       };
       let result = pi.next();
       match result {
