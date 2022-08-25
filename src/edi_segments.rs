@@ -52,7 +52,7 @@ pub struct Segment {
   pub raw: Vec<u8>
 }
 
-pub fn create_parser<T: Read>(ioish: T, element_delimiter: Vec<u8>, segment_delimiter: Vec<u8>) -> ParserIterator<T> {
+pub fn create_segment_iterator<T: Read>(ioish: T, element_delimiter: Vec<u8>, segment_delimiter: Vec<u8>) -> ParserIterator<T> {
   let pc = ParserConfig {
     element_delimiter: element_delimiter,
     segment_delimiter: segment_delimiter

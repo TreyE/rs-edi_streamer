@@ -85,6 +85,11 @@ pub fn detect_delimiters<T: Read + Seek>(ioish: &mut T) -> DelimiterResult {
     let eof_error = Error::from(ErrorKind::UnexpectedEof);
     return DelimiterResult::DelimiterReadError(eof_error)
   }
+  let rewind_pos = SeekFrom::Start(0);
+  match ioish.seek(rewind_pos) {
+    Ok(_) => (),
+    Err(e) => return DelimiterResult::DelimiterReadError(e)
+  }
   DelimiterResult::DelimitersFound(
     Delimiters {
       element_delimiter: element_delimiter,
