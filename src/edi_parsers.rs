@@ -20,19 +20,19 @@ pub fn create_edi_streamer<'a, T: Read + Seek>(ioish: &'a mut T) -> StreamerCrea
 }
 
 pub trait StreamParser {
-  fn segment(&self, segment: &Segment);
+  fn segment(&mut self, segment: &Segment);
 
-  fn interchange_start(&self, segment: &Segment);
-  fn interchange_end(&self, segment: Option<&Segment>);
+  fn interchange_start(&mut self, segment: &Segment);
+  fn interchange_end(&mut self, segment: Option<&Segment>);
 
-  fn functional_group_start(&self, segment: &Segment);
-  fn functional_group_end(&self, segment: Option<&Segment>);
+  fn functional_group_start(&mut self, segment: &Segment);
+  fn functional_group_end(&mut self, segment: Option<&Segment>);
 
-  fn transaction_start(&self, segment: &Segment);
-  fn transaction_end(&self, segment: Option<&Segment>);
+  fn transaction_start(&mut self, segment: &Segment);
+  fn transaction_end(&mut self, segment: Option<&Segment>);
 
-  fn stream_end(&self);
-  fn error(&self, error: Error);
+  fn stream_end(&mut self);
+  fn error(&mut self, error: Error);
 
   fn in_interchange(&self) -> bool;
   fn in_functional_group(&self) -> bool;
