@@ -26,8 +26,8 @@ pub fn detect_delimiters<T: Read + Seek>(ioish: &mut T) -> DelimiterResult {
     },
     Err(e) => return DelimiterResult::DelimiterReadError(e)
   };
-  let delim_val = buff.clone();
-  let element_delimiter = Vec::from([buff[0].clone()]);
+  let delim_val = buff;
+  let element_delimiter = Vec::from([buff[0]]);
   let mut sd_buff = [0; 1];
   let mut read_count = 0;
   let mut delim_count = 1;
@@ -45,9 +45,9 @@ pub fn detect_delimiters<T: Read + Seek>(ioish: &mut T) -> DelimiterResult {
       Err(e) => return DelimiterResult::DelimiterReadError(e)
     };
     if delim_val == sd_buff {
-      delim_count = delim_count + 1;
+      delim_count += 1;
     }
-    read_count = read_count + 1;
+    read_count += 1;
   }
   let mut seg_delimiter : Vec<u8> = Vec::new();
   match ioish.read(&mut sd_buff) {
@@ -73,7 +73,7 @@ pub fn detect_delimiters<T: Read + Seek>(ioish: &mut T) -> DelimiterResult {
       Ok(_) => {
         return DelimiterResult::DelimitersFound(
           Delimiters {
-            element_delimiter: element_delimiter,
+            element_delimiter,
             segment_delimiter: seg_delimiter
           }
         )
@@ -81,7 +81,7 @@ pub fn detect_delimiters<T: Read + Seek>(ioish: &mut T) -> DelimiterResult {
       Err(e) => return DelimiterResult::DelimiterReadError(e)
     };
   }
-  if seg_delimiter.len() < 1 {
+  if seg_delimiter.is_empty() {
     let eof_error = Error::from(ErrorKind::UnexpectedEof);
     return DelimiterResult::DelimiterReadError(eof_error)
   }
@@ -92,7 +92,7 @@ pub fn detect_delimiters<T: Read + Seek>(ioish: &mut T) -> DelimiterResult {
   }
   DelimiterResult::DelimitersFound(
     Delimiters {
-      element_delimiter: element_delimiter,
+      element_delimiter,
       segment_delimiter: seg_delimiter
     }
   )

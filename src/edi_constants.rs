@@ -1,4 +1,5 @@
-pub static SEGMENT_STARTERS : [u8; 52] = [
+#[allow(clippy::char_lit_as_u8)]
+pub const SEGMENT_STARTERS : [u8; 52] = [
   'a' as u8,
   'b' as u8,
   'c' as u8,
@@ -51,4 +52,42 @@ pub static SEGMENT_STARTERS : [u8; 52] = [
   'X' as u8,
   'Y' as u8,
   'Z' as u8
+];
+
+#[allow(clippy::char_lit_as_u8)]
+pub const ISA_TAG : [u8; 3] = [
+  'I' as u8,
+  'S' as u8,
+  'A' as u8
+];
+
+#[allow(clippy::char_lit_as_u8)]
+pub const IEA_TAG : [u8; 3] = [
+  'I' as u8,
+  'E' as u8,
+  'A' as u8
+];
+
+#[allow(clippy::char_lit_as_u8)]
+pub const GS_TAG : [u8; 2] = [
+  'G' as u8,
+  'S' as u8
+];
+
+#[allow(clippy::char_lit_as_u8)]
+pub static GE_TAG : [u8; 2] = [
+  'G' as u8,
+  'E' as u8
+];
+
+#[allow(clippy::char_lit_as_u8)]
+pub const ST_TAG : [u8; 2] = [
+  'S' as u8,
+  'T' as u8
+];
+
+#[allow(clippy::char_lit_as_u8)]
+pub const SE_TAG : [u8; 2] = [
+  'S' as u8,
+  'E' as u8
 ];

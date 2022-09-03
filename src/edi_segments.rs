@@ -8,6 +8,7 @@ struct ParserConfig {
     segment_delimiter: Vec<u8>
 }
 
+#[allow(clippy::upper_case_acronyms)]
 enum PState {
     InField,
     InSegTerm,
@@ -44,8 +45,8 @@ pub struct Segment {
 
 pub fn create_segment_iterator<T: Read>(ioish: &mut T, element_delimiter: Vec<u8>, segment_delimiter: Vec<u8>) -> ParserIterator<T> {
   let pc = ParserConfig {
-    element_delimiter: element_delimiter,
-    segment_delimiter: segment_delimiter
+    element_delimiter,
+    segment_delimiter
   };
   let ps = ParserState {
     byte_index: 0,
@@ -94,20 +95,20 @@ fn build_segment(fields: Vec<Vec<u8>>, raw: Vec<u8>, start_index: u64, end_index
     Some(x) => x.clone()
   };
   Segment {
-    tag: tag,
-    fields: fields,
+    tag,
+    fields,
     start_offset: start_index,
     end_offset: end_index,
-    segment_index: segment_index,
-    raw: raw
+    segment_index,
+    raw
   }
 }
 
 fn step<T: Read>(pc: &ParserConfig, ps: &mut ParserState, ioish: &mut T) -> Result<ParserOutput, Error> {
   let mut buff = [0; 1];
-  let current_index = ps.byte_index.clone();
+  let current_index = ps.byte_index;
   println!("{:?}\n", current_index);
-  ps.byte_index = ps.byte_index + 1;
+  ps.byte_index += 1;
   match ioish.read(&mut buff) {
     Ok(size) if size == 1 => (),
     Ok(_) => {
@@ -153,7 +154,7 @@ fn step<T: Read>(pc: &ParserConfig, ps: &mut ParserState, ioish: &mut T) -> Resu
                 ps.current_field.push(a);
                 ps.state = PState::InField;
                 ps.start_of_last_segment = current_index;
-                ps.segment_index = ps.segment_index + 1;
+                ps.segment_index +=  1;
                 Ok(Some(seg))
           },
           PState::InSegTerm => {
