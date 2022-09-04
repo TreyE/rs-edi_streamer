@@ -1,6 +1,6 @@
 use crate::edi_parsers::StreamParser;
 use crate::edi_segments::Segment;
-use std::rc::Rc;
+use std::sync::Arc;
 use core::cell::RefCell;
 
 #[derive(PartialEq)]
@@ -12,26 +12,26 @@ enum ParserState {
 }
 
 struct Interchange {
-  functional_groups: Vec<Rc<FunctionalGroup>>,
-  segments: Vec<Rc<Segment>>
+  functional_groups: Vec<Arc<FunctionalGroup>>,
+  segments: Vec<Arc<Segment>>
 }
 
 struct FunctionalGroup {
-  transactions: Vec<Rc<Transaction>>,
-  segments: Vec<Rc<Segment>>
+  transactions: Vec<Arc<Transaction>>,
+  segments: Vec<Arc<Segment>>
 }
 
 struct Transaction {
-  segments: Vec<Rc<Segment>>
+  segments: Vec<Arc<Segment>>
 }
 
 pub struct DefaultParser {
   state: ParserState,
-  interchanges: Vec<Rc<Interchange>>,
+  interchanges: Vec<Arc<Interchange>>,
   current_interchange: Option<RefCell<Interchange>>,
   current_functional_group: Option<RefCell<FunctionalGroup>>,
   current_transaction: Option<RefCell<Transaction>>,
-  segments: Vec<Rc<Segment>>
+  segments: Vec<Arc<Segment>>
 }
 
 impl DefaultParser {
@@ -69,7 +69,7 @@ impl<'a> StreamParser for DefaultParser {
             let trans = Transaction {
               segments: ctb.segments.clone()
             };
-            let trc = Rc::new(trans);
+            let trc = Arc::new(trans);
             let mut fgm = fg.borrow_mut();
             fgm.transactions.push(trc);
           }
@@ -104,7 +104,7 @@ impl<'a> StreamParser for DefaultParser {
               transactions: fgb.transactions.clone(),
               segments: fgb.segments.clone()
             };
-            let tfg = Rc::new(new_group);
+            let tfg = Arc::new(new_group);
             let mut cim = ci.borrow_mut();
             cim.functional_groups.push(tfg);
           }
@@ -136,7 +136,7 @@ impl<'a> StreamParser for DefaultParser {
           segments: cim.segments.clone(),
           functional_groups: cim.functional_groups.clone()
         };
-        let interchange_rc = Rc::new(interchange);
+        let interchange_rc = Arc::new(interchange);
         self.interchanges.push(interchange_rc);
       }
     }
@@ -177,7 +177,7 @@ fn consume_segment(parser: &mut DefaultParser, segment: &Segment) {
     segment_index: segment.segment_index,
     raw: segment.raw.clone()
   };
-  let s_box: Rc<Segment> = Rc::new(new_seg);
+  let s_box: Arc<Segment> = Arc::new(new_seg);
   parser.segments.push(s_box.clone());
   if parser.in_transaction() {
     match &mut parser.current_transaction {
