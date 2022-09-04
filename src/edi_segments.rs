@@ -75,6 +75,7 @@ impl<'a, T: Read> Iterator for ParserIterator<'a, T> {
 fn parser_next<T: Read>(pi: &mut ParserIterator<T>) -> Option<Result<Segment, Error>> {
   match pi.parser_state.state {
     PState::Errored => None,
+    PState::EOF => None,
     _ => {
       let res = step(&pi.parser_config, &mut pi.parser_state, &mut pi.io_source);
       match res {
@@ -107,15 +108,19 @@ fn build_segment(fields: Vec<Vec<u8>>, raw: Vec<u8>, start_index: u64, end_index
 fn step<T: Read>(pc: &ParserConfig, ps: &mut ParserState, ioish: &mut T) -> Result<ParserOutput, Error> {
   let mut buff = [0; 1];
   let current_index = ps.byte_index;
-  println!("{:?}\n", current_index);
   ps.byte_index += 1;
   match ioish.read(&mut buff) {
     Ok(size) if size == 1 => (),
     Ok(_) => {
       ps.state = PState::EOF;
-      ps.current_segment.push(ps.current_field.clone());
+      match ps.state {
+        PState::InSegTerm => (),
+        _ => {
+          ps.current_segment.push(ps.current_field.clone());
+        }
+      }
       let s = ps.current_segment.clone();
-      let seg = build_segment(s, ps.current_string.clone(), ps.start_of_last_segment, current_index - 1, ps.segment_index);
+      let seg = build_segment(s, ps.current_string.clone(), ps.start_of_last_segment, current_index, ps.segment_index);
       return Ok(Some(seg))
     },
     Err(e) => {
@@ -217,8 +222,7 @@ mod test {
             }
           }
         }
-        Err(x) => {
-            println!("{:?}", x);
+        Err(_x) => {
             panic!("Error")
         }
       }

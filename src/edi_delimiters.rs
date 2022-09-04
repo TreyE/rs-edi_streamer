@@ -66,11 +66,16 @@ pub fn detect_delimiters<T: Read + Seek>(ioish: &mut T) -> DelimiterResult {
     },
     Err(e) => return DelimiterResult::DelimiterReadError(e)
   };
+  let rewind_pos = SeekFrom::Start(0);
   while !SEGMENT_STARTERS.contains(&sd_buff[0]) {
     seg_delimiter.push(sd_buff[0]);
     match ioish.read(&mut sd_buff) {
       Ok(size) if size == 1 => (),
       Ok(_) => {
+        match ioish.seek(rewind_pos) {
+          Ok(_) => (),
+          Err(e) => return DelimiterResult::DelimiterReadError(e)
+        }
         return DelimiterResult::DelimitersFound(
           Delimiters {
             element_delimiter,
@@ -85,7 +90,6 @@ pub fn detect_delimiters<T: Read + Seek>(ioish: &mut T) -> DelimiterResult {
     let eof_error = Error::from(ErrorKind::UnexpectedEof);
     return DelimiterResult::DelimiterReadError(eof_error)
   }
-  let rewind_pos = SeekFrom::Start(0);
   match ioish.seek(rewind_pos) {
     Ok(_) => (),
     Err(e) => return DelimiterResult::DelimiterReadError(e)
@@ -104,6 +108,7 @@ mod test {
   use super::DelimiterResult;
   use std::io::ErrorKind;
   use std::io::Cursor;
+  use std::io::Seek;
 
   #[test]
   fn not_long_enough_for_field_delimiter() {
@@ -170,6 +175,23 @@ mod test {
       DelimiterResult::DelimitersFound(x) => {
         assert_eq!(x.element_delimiter, Vec::from([('*' as u8)]));
         assert_eq!(x.segment_delimiter, Vec::from([('~' as u8), ('\n' as u8)]));
+      }
+    }
+  }
+
+  #[test]
+  fn multibyte_delimiter_only_test() {
+    let mut ioish = Cursor::new("ISA*00*TSI       *01*92511930  *01*ME             *12*BRADLEY        *970815*1732*U*00201*000000050*0*T*>~\n".as_bytes());
+    let res = detect_delimiters(&mut ioish);
+    match res {
+      DelimiterResult::DelimiterReadError(_) => panic!("Delimiters not found"),
+      DelimiterResult::DelimitersFound(x) => {
+        assert_eq!(x.element_delimiter, Vec::from([('*' as u8)]));
+        assert_eq!(x.segment_delimiter, Vec::from([('~' as u8), ('\n' as u8)]));
+        match ioish.stream_position() {
+          Ok(i) => assert_eq!(i, 0),
+          _ => panic!("FAILED TO CHECK POSITION")
+        }
       }
     }
   }

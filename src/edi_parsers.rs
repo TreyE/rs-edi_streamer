@@ -139,6 +139,11 @@ fn consume_segment_in_functional_group<T: StreamParser>(stream_parser: &mut T, s
     stream_parser.functional_group_end(None);
     stream_parser.segment(segment);
     stream_parser.interchange_end(Some(segment));
+  } else if ISA_TAG.eq(tag_compare) {
+    stream_parser.functional_group_end(None);
+    stream_parser.interchange_end(None);
+    stream_parser.interchange_start(segment);
+    stream_parser.segment(segment);
   } else {
     stream_parser.segment(segment);
   }
