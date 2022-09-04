@@ -34,6 +34,7 @@ pub struct DefaultParser {
   segments: Vec<Arc<Segment>>
 }
 
+#[allow(clippy::new_without_default)]
 impl DefaultParser {
   pub fn new() -> Self {
     DefaultParser {
@@ -47,7 +48,7 @@ impl DefaultParser {
   }
 }
 
-impl<'a> StreamParser for DefaultParser {
+impl StreamParser for DefaultParser {
   fn transaction_start(&mut self, _segment: &Segment) {
     let trans = Transaction {
       segments: Vec::new()
